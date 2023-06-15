@@ -1,3 +1,4 @@
+using System.Configuration;
 using BusinessLogic.Context;
 using Microsoft.EntityFrameworkCore;
 
@@ -15,7 +16,19 @@ builder.Services.AddDbContext<ES2DbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("DatabaseConnection"))
 );
 
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy(name: "MyPolicy",
+        policy =>
+        {
+            policy.WithOrigins("https://localhost:7057/").WithMethods("PUT", "DELETE", "GET");
+        });
+});
+
 var app = builder.Build();
+app.UseHttpsRedirection();
+app.UseStaticFiles();
+app.UseRouting();
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
@@ -25,7 +38,11 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
-
+app.UseCors(x => x
+    .AllowAnyMethod()
+    .AllowAnyHeader()
+    .SetIsOriginAllowed(origin => true) // allow any origin
+    .AllowCredentials()); // allow credentials
 app.UseAuthorization();
 
 app.MapControllers();

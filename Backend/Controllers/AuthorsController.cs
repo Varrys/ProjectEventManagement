@@ -7,9 +7,12 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using BusinessLogic.Context;
 using BusinessLogic.Entities;
+using Microsoft.AspNetCore.Cors;
+using System.Web.Http.Cors;
 
 namespace Backend.Controllers
 {
+    
     [Route("api/[controller]")]
     [ApiController]
     public class AuthorsController : ControllerBase
@@ -20,8 +23,8 @@ namespace Backend.Controllers
         {
             _context = context;
         }
-
         // GET: api/Authors
+        
         [HttpGet]
         public async Task<ActionResult<IEnumerable<dynamic>>> GetAuthors()
         {

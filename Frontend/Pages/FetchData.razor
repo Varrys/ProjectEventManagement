@@ -1,60 +1,93 @@
 ﻿@page "/fetchdata"
-@inject HttpClient Http
+@inject HttpClient HttpClient
+@using BusinessLogic.Entities
 
-<PageTitle>Weather forecast</PageTitle>
-
-<h1>Weather forecast</h1>
-
-<p>This component demonstrates fetching data from the server.</p>
-
-@if (forecasts == null)
+@if (authors == null)
 {
-    <p>
-        <em>Loading...</em>
-    </p>
+    <p>No Todo Items found.</p>
 }
 else
 {
-    <table class="table">
-        <thead>
-        <tr>
-            <th>Date</th>
-            <th>Temp. (C)</th>
-            <th>Temp. (F)</th>
-            <th>Summary</th>
-        </tr>
-        </thead>
-        <tbody>
-        @foreach (var forecast in forecasts)
+    <ul>
+        @foreach (var item in authors)
         {
-            <tr>
-                <td>@forecast.Date.ToShortDateString()</td>
-                <td>@forecast.TemperatureC</td>
-                <td>@forecast.TemperatureF</td>
-                <td>@forecast.Summary</td>
-            </tr>
+            <li>@item.FirstName</li>
         }
-        </tbody>
-    </table>
+    </ul>
 }
 
 @code {
-    private WeatherForecast[]? forecasts;
+    private Author[]? authors;
+    protected override async Task OnInitializedAsync() => 
+        authors = await HttpClient.GetFromJsonAsync<Author[]>("http://localhost:5052/api/Authors");
+}
+
+
+@*
+@using System.Net.Http
+@using System.Text.Json
+@using System.Text.Json.Serialization
+@using BusinessLogic.Entities
+@inject HttpClient HttpClient
+
+<h3>Author List</h3>
+
+<table class="table">
+    <thead>
+    <tr>
+        <th>Id</th>
+        <th>Name</th>
+        <th>Birth Date</th>
+        <th>Books</th>
+    </tr>
+    </thead>
+    <tbody>
+    @if (authors != null)
+    {
+        foreach (var author in authors)
+        {
+            <tr>
+                <td>@author.Id</td>
+                <td>@author.FirstName 
+                    @author.LastName</td>
+                <td>@author.BirthDate</td>
+                <td>
+                    <ul>
+                        @foreach (var book in author.Books)
+                        {
+                            <li>@book.Title</li>
+                        }
+                    </ul>
+                </td>
+            </tr>
+        }
+    }
+    else
+    {
+        <tr>
+            <td colspan="4">Loading...</td>
+        </tr>
+    }
+    </tbody>
+</table>
+
+@code {
+    List<Author>? authors;
 
     protected override async Task OnInitializedAsync()
     {
-        forecasts = await Http.GetFromJsonAsync<WeatherForecast[]>("sample-data/weather.json");
+        try
+        {
+            var response = await HttpClient.GetAsync("http://localhost:5052/api/Authors");
+            response.EnsureSuccessStatusCode();
+
+            var content = await response.Content.ReadAsStringAsync();
+            authors = JsonSerializer.Deserialize<List<Author>>(content);
+        }
+        catch (HttpRequestException)
+        {
+    // ...
+        }
     }
-
-    public class WeatherForecast
-    {
-        public DateOnly Date { get; set; }
-
-        public int TemperatureC { get; set; }
-
-        public string? Summary { get; set; }
-
-        public int TemperatureF => 32 + (int)(TemperatureC / 0.5556);
-    }
-
 }
+*@
