@@ -8,4 +8,9 @@ VALUES ('Machado', 'de Assis', '1839-06-21'),
 INSERT INTO books (title, publication_year, author_id, status)
 VALUES ('Dom Casmurro', 1899, (SELECT id FROM authors LIMIT 1 OFFSET 0), 'Available'),
        ('The Hour of the Star', 1977, (SELECT id FROM authors LIMIT 1 OFFSET 1), 'Borrowed'),
-       ('Gabriela, Clove and Cinnamon', 1958, (SELECT id FROM authors LIMIT 1 OFFSET 2), 'Available');                                              
+       ('Gabriela, Clove and Cinnamon', 1958, (SELECT id FROM authors LIMIT 1 OFFSET 2), 'Available');
+
+INSERT INTO users (email, username, password, name, role, createdAt, enable)
+VALUES ('user1@example.com', 'user1', '123', 'User 1', 'Admin', NOW(), true),
+       ('user2@example.com', 'user2', '234', 'User 2', 'User', NOW(), true),
+       ('user2@example.com', 'user3', '345', 'User2 3', 'UserManager', NOW(), true);

@@ -24,7 +24,6 @@ namespace Backend.Controllers
             _context = context;
         }
         // GET: api/Authors
-        
         [HttpGet]
         public async Task<ActionResult<IEnumerable<dynamic>>> GetAuthors()
         {

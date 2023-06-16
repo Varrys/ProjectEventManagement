@@ -2,26 +2,27 @@
 @inject HttpClient HttpClient
 @using BusinessLogic.Entities
 
-@if (authors == null)
+@if (users == null)
 {
     <p>No Todo Items found.</p>
 }
 else
 {
     <ul>
-        @foreach (var item in authors)
+        @foreach (var item in users)
         {
-            <li>@item.FirstName</li>
+            <li>@item.Name</li>
         }
     </ul>
 }
 
 @code {
-    private Author[]? authors;
+    //private Author[]? authors;
+    private User[]? users;
     protected override async Task OnInitializedAsync() => 
-        authors = await HttpClient.GetFromJsonAsync<Author[]>("http://localhost:5052/api/Authors");
+        //authors = await HttpClient.GetFromJsonAsync<Author[]>("http://localhost:5052/api/Authors");
+        users = await HttpClient.GetFromJsonAsync<User[]>("http://localhost:5052/api/Users");
 }
-
 
 @*
 @using System.Net.Http

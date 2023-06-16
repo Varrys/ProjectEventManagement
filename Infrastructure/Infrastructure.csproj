@@ -28,9 +28,12 @@
       <None Update="docker\images\pg\migrations\003-create-books-table.sql">
         <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       </None>
-      <None Update="docker\images\pg\migrations\004-seed-data.sql">
+      <None Update="docker\images\pg\migrations\004-create-users-table.sql">
         <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       </None>
+      <None Update="docker\images\pg\migrations\005-seed-data.sql">
+        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      </None>        
     </ItemGroup>
 
 </Project>
