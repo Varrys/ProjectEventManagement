@@ -1,4 +1,3 @@
-using System.Configuration;
 using BusinessLogic.Context;
 using Microsoft.EntityFrameworkCore;
 
@@ -12,17 +11,14 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
 // Add default connection string for the Web API controllers
-builder.Services.AddDbContext<ES2DbContext>(options => 
+builder.Services.AddDbContext<ES2DbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("DatabaseConnection"))
 );
 
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy(name: "MyPolicy",
-        policy =>
-        {
-            policy.WithOrigins("https://localhost:7057/").WithMethods("PUT", "DELETE", "GET");
-        });
+    options.AddPolicy("MyPolicy",
+        policy => { policy.WithOrigins("https://localhost:7057/").WithMethods("PUT", "DELETE", "GET"); });
 });
 
 var app = builder.Build();

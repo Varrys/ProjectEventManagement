@@ -1,6 +1,4 @@
-﻿using System.Net.Http;
-using System.Net.Http.Json;
-using System.Threading.Tasks;
+﻿using System.Net.Http.Json;
 using BusinessLogic.Entities;
 
 public class UserService
@@ -17,10 +15,7 @@ public class UserService
         var loginModel = new { username, password };
         var response = await httpClient.PostAsJsonAsync("/api/Users/Login", loginModel);
 
-        if (response.IsSuccessStatusCode)
-        {
-            return await response.Content.ReadFromJsonAsync<User>();
-        }
+        if (response.IsSuccessStatusCode) return await response.Content.ReadFromJsonAsync<User>();
 
         return null;
     }

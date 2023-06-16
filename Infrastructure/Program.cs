@@ -6,15 +6,12 @@ var action = args.Length > 0 ? args[0].ToLower() : "run";
 if (Helpers.IsCommandAvailable("docker") && Helpers.IsCommandAvailable("docker-compose"))
 {
     // Check if .env file exists, if not, create one from .env.example
-    if (!File.Exists(".env"))
-    {
-        File.Copy(".env.example", ".env");
-    }
+    if (!File.Exists(".env")) File.Copy(".env.example", ".env");
 
-    switch(action)
+    switch (action)
     {
         case "start":
-            if(Helpers.AreContainersRunning())
+            if (Helpers.AreContainersRunning())
             {
                 Console.WriteLine("Containers are already running.");
             }
@@ -24,22 +21,19 @@ if (Helpers.IsCommandAvailable("docker") && Helpers.IsCommandAvailable("docker-c
                 Helpers.ExecuteCommand("docker-compose build");
                 Helpers.ExecuteCommand("docker-compose up -d");
             }
+
             break;
 
         case "stop":
-            if(!Helpers.AreContainersRunning())
-            {
+            if (!Helpers.AreContainersRunning())
                 Console.WriteLine("No containers are running.");
-            }
             else
-            {
                 // Stop running containers
                 Helpers.ExecuteCommand("docker-compose down");
-            }
             break;
 
         case "run":
-            if(Helpers.AreContainersRunning())
+            if (Helpers.AreContainersRunning())
             {
                 Console.WriteLine("Containers are already running.");
             }
@@ -49,6 +43,7 @@ if (Helpers.IsCommandAvailable("docker") && Helpers.IsCommandAvailable("docker-c
                 Helpers.ExecuteCommand("docker-compose build");
                 Helpers.ExecuteCommand("docker-compose up");
             }
+
             break;
 
         default:

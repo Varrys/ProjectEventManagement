@@ -1,0 +1,105 @@
+﻿@page "/Events"
+@using Blazorise
+@using Blazorise.Bootstrap // Adicione esta linha
+@using BusinessLogic.Entities
+@inject HttpClient httpClient
+
+<h3>Event List</h3>
+
+@if (events == null)
+{
+    <p>Loading...</p>
+}
+<Blazorise.Bootstrap.Button Color="Color.Primary" @onclick="OpenModal">Novo Evento</Blazorise.Bootstrap.Button> <!-- Altere esta linha -->
+
+<table class="table">
+    <thead>
+        <tr>
+            <th>Event ID</th>
+            <th>Name</th>
+            <th>Date</th>
+            <th>Location</th>
+            <th>Description</th>
+            <th>Max Capacity</th>
+            <th>Tickets</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var item in events)
+        {
+            <tr>
+                <td>@item.EventId</td>
+                <td>@item.Name</td>
+                <td>@item.Date.ToString("yyyy-MM-dd HH:mm:ss")</td>
+                <td>@item.Location</td>
+                <td>@item.Description</td>
+                <td>@item.MaxCapacity</td>
+                <td>
+                    @if (item.Tickets != null && item.Tickets.Count > 0)
+                    {
+                        <ul>
+                            @foreach (var ticket in item.Tickets)
+                            {
+                                <li>
+                                    <p>Ticket ID: @ticket.TicketId</p>
+                                    <p>Price: @ticket.Price.ToString("0.00")</p>
+                                    <p>Name: @ticket.Name</p>
+                                    <p>Description: @ticket.Description</p>
+                                    <p>Quantity: @ticket.Quantity</p>
+                                </li>
+                            }
+                        </ul>
+                    }
+                    else
+                    {
+                        <p>No tickets available</p>
+                    }
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+<Blazorise.Modal @ref="myModalRef">
+    <Blazorise.ModalContent>
+        <!-- Conteúdo da modal -->
+        <h3>Adicionar Novo Evento</h3>
+        <!-- Aqui você pode adicionar campos para coletar informações sobre o novo evento -->
+    </Blazorise.ModalContent>
+    <Blazorise.ModalFooter> <!-- Altere esta linha -->
+        <Blazorise.Bootstrap.Button Color="Color.Primary" Clicked="SalvarEvento">Salvar</Blazorise.Bootstrap.Button> <!-- Altere esta linha -->
+        <Blazorise.Bootstrap.Button Color="Color.Secondary" Clicked="CancelarModal">Cancelar</Blazorise.Bootstrap.Button> <!-- Altere esta linha -->
+    </Blazorise.ModalFooter> <!-- Altere esta linha -->
+</Blazorise.Modal>
+
+@code {
+    private Blazorise.Modal myModalRef;
+
+    private void MostrarModal()
+    {
+        myModalRef.Show();
+    }
+
+    private void SalvarEvento()
+    {
+        // Lógica para salvar o novo evento
+        myModalRef.Hide();
+    }
+
+    private void CancelarModal()
+    {
+        myModalRef.Hide();
+    }
+
+    private void OpenModal()
+    {
+        myModalRef.Show();
+    }
+
+    private Event[] events;
+
+    protected override async Task OnInitializedAsync()
+    {
+        events = await httpClient.GetFromJsonAsync<Event[]>("http://localhost:5052/api/Events");
+    }
+}

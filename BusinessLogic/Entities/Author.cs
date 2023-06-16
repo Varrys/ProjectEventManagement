@@ -1,9 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
+﻿namespace BusinessLogic.Entities;
 
-namespace BusinessLogic.Entities;
-
-public partial class Author
+public class Author
 {
     public Guid Id { get; set; }
 

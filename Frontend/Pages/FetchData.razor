@@ -1,6 +1,6 @@
 ﻿@page "/fetchdata"
-@inject HttpClient HttpClient
 @using BusinessLogic.Entities
+@inject HttpClient HttpClient
 
 @if (users == null)
 {
@@ -17,11 +17,13 @@ else
 }
 
 @code {
-    //private Author[]? authors;
     private User[]? users;
-    protected override async Task OnInitializedAsync() => 
-        //authors = await HttpClient.GetFromJsonAsync<Author[]>("http://localhost:5052/api/Authors");
+
+    protected override async Task OnInitializedAsync()
+    {
         users = await HttpClient.GetFromJsonAsync<User[]>("http://localhost:5052/api/Users");
+    }
+
 }
 
 @*

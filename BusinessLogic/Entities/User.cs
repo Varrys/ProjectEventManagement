@@ -1,9 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
+﻿namespace BusinessLogic.Entities;
 
-namespace BusinessLogic.Entities;
-
-public partial class User
+public class User
 {
     public Guid UserId { get; set; }
 
@@ -20,4 +17,7 @@ public partial class User
     public DateTime CreatedAt { get; set; } = DateTime.Now;
 
     public bool Enable { get; set; }
+
+    public virtual ICollection<Event> Events { get; set; } = new List<Event>();
+    public virtual ICollection<UserEvent> UserEvents { get; set; } = new List<UserEvent>();
 }
