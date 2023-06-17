@@ -8,7 +8,7 @@ public class Event
     public string Location { get; set; } = null!;
     public string Description { get; set; } = null!;
     public int MaxCapacity { get; set; }
-    public Guid UserId { get; set; }
+    public Guid? UserId { get; set; }
 
     public virtual User User { get; set; } = null!;
     public virtual ICollection<Ticket> Tickets { get; set; } = new List<Ticket>();

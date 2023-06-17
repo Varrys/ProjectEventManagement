@@ -1,6 +1,4 @@
 ﻿@page "/Events"
-@using Blazorise
-@using Blazorise.Bootstrap // Adicione esta linha
 @using BusinessLogic.Entities
 @inject HttpClient httpClient
 
@@ -10,8 +8,6 @@
 {
     <p>Loading...</p>
 }
-<Blazorise.Bootstrap.Button Color="Color.Primary" @onclick="OpenModal">Novo Evento</Blazorise.Bootstrap.Button> <!-- Altere esta linha -->
-
 <table class="table">
     <thead>
         <tr>
@@ -60,46 +56,51 @@
     </tbody>
 </table>
 
-<Blazorise.Modal @ref="myModalRef">
-    <Blazorise.ModalContent>
-        <!-- Conteúdo da modal -->
-        <h3>Adicionar Novo Evento</h3>
-        <!-- Aqui você pode adicionar campos para coletar informações sobre o novo evento -->
-    </Blazorise.ModalContent>
-    <Blazorise.ModalFooter> <!-- Altere esta linha -->
-        <Blazorise.Bootstrap.Button Color="Color.Primary" Clicked="SalvarEvento">Salvar</Blazorise.Bootstrap.Button> <!-- Altere esta linha -->
-        <Blazorise.Bootstrap.Button Color="Color.Secondary" Clicked="CancelarModal">Cancelar</Blazorise.Bootstrap.Button> <!-- Altere esta linha -->
-    </Blazorise.ModalFooter> <!-- Altere esta linha -->
-</Blazorise.Modal>
+<h3>Add Event</h3>
+
+@if (addedEvent == null)
+{
+    <form @onsubmit="AddEvent">
+        <div class="form-group">
+            <label for="eventName">Name:</label>
+            <input id="eventName" type="text" class="form-control" @bind="@newEvent.Name" required />
+        </div>
+        <div class="form-group">
+            <label for="eventDate">Date:</label>
+            <input id="eventDate" type="datetime-local" class="form-control" @bind="@newEvent.Date" required />
+        </div>
+        <div class="form-group">
+            <label for="eventLocation">Location:</label>
+            <input id="eventLocation" type="text" class="form-control" @bind="@newEvent.Location" required />
+        </div>
+        <div class="form-group">
+            <label for="eventDescription">Description:</label>
+            <textarea id="eventDescription" class="form-control" @bind="@newEvent.Description" required></textarea>
+        </div>
+        <div class="form-group">
+            <label for="eventMaxCapacity">Max Capacity:</label>
+            <input id="eventMaxCapacity" type="number" class="form-control" @bind="@newEvent.MaxCapacity" required />
+        </div>
+        <button type="submit" class="btn btn-primary">Add Event</button>
+    </form>
+}
+else
+{
+    <p>Event added successfully!</p>
+}
 
 @code {
-    private Blazorise.Modal myModalRef;
-
-    private void MostrarModal()
-    {
-        myModalRef.Show();
-    }
-
-    private void SalvarEvento()
-    {
-        // Lógica para salvar o novo evento
-        myModalRef.Hide();
-    }
-
-    private void CancelarModal()
-    {
-        myModalRef.Hide();
-    }
-
-    private void OpenModal()
-    {
-        myModalRef.Show();
-    }
-
     private Event[] events;
+    private Event newEvent = new Event();
+    private Event addedEvent;
 
     protected override async Task OnInitializedAsync()
     {
         events = await httpClient.GetFromJsonAsync<Event[]>("http://localhost:5052/api/Events");
+    }
+
+    private async Task AddEvent()
+    {
+        addedEvent = await httpClient.PostAsJsonAsync<Event>("http://localhost:5052/api/Events", newEvent).Result.Content.ReadFromJsonAsync<Event>();
     }
 }

@@ -1,10 +1,11 @@
-﻿namespace BusinessLogic.Entities;
-
-public class AuthDto
+﻿namespace BusinessLogic.Entities
 {
-    public Guid UserId { get; set; }
+    public class AuthDto
+    {
+        public Guid UserId { get; set; }
 
-    public string Username { get; set; }
+        public string Username { get; set; }
 
-    public string Role { get; set; }
+        public string Role { get; set; }
+    }
 }

@@ -1,6 +1,58 @@
-﻿@page "/Login"
+﻿@using BusinessLogic.Entities
+@using System.Net.Http.Json;
+@using System.Net.Http;
+@page "/Login"
+@inject HttpClient HttpClient
+@inject NavigationManager NavigationManager
+
 <h3>Login</h3>
+<p>
+    <label for="username">Username:</label>
+    <input type="text" id="username" @bind="@Username"/>
+</p>
+<p>
+    <label for="password">Password:</label>
+    <input type="password" id="password" @bind="@Password" />
+</p>
+<p>@loginMessage</p> <!-- Exibe a mensagem de login -->
+<p>
+    <button @onclick="PerformLogin">Login</button>
+</p>
 
 @code {
+    private string Username { get; set; }
+    private string Password { get; set; }
+    private string loginMessage; // Mensagem para exibir o resultado do login
 
+    private async Task PerformLogin()
+    {
+        var request = new AuthenticationRequest
+        {
+            Username = Username,
+            Password = Password
+        };
+
+        var response = await HttpClient.PostAsJsonAsync("http://localhost:5052/api/auth/login", request);
+
+        if (response.IsSuccessStatusCode)
+        {
+            var authenticationResponse = await response.Content.ReadFromJsonAsync<AuthenticationResponse>();
+    // Login bem-sucedido, lide com a resposta de autenticação
+            var token = authenticationResponse.Token;
+            var auth = authenticationResponse.Auth;
+            NavigationManager.NavigateTo("/", true);
+
+    // Redirecione ou execute outras ações
+
+            loginMessage = "Login bem-sucedido!"; // Mensagem de sucesso
+        }
+        else
+        {
+    // Login falhou, lide com o erro
+            var errorMessage = await response.Content.ReadAsStringAsync();
+    // Exiba a mensagem de erro para o usuário
+
+            loginMessage = "Login falhou: " + errorMessage; // Mensagem de erro
+        }
+    }
 }
