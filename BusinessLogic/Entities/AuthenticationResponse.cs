@@ -1,9 +1,9 @@
 ﻿// AuthenticationResponse.cs
-namespace BusinessLogic.Entities
+
+namespace BusinessLogic.Entities;
+
+public class AuthenticationResponse
 {
-    public class AuthenticationResponse
-    {
-        public string Token { get; set; }
-        public AuthDto Auth { get; set; }
-    }
+    public string Token { get; set; }
+    public AuthDto Auth { get; set; }
 }

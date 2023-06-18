@@ -1,0 +1,11 @@
+﻿@inject IJSRuntime JSRuntime
+@inject NavigationManager NavigationManager
+
+    <button @onclick="Logout">Logout</button>
+@code {
+    private async Task Logout()
+    {
+        await JSRuntime.InvokeVoidAsync("sessionStorage.removeItem", "user"); // ou sessionStorage.removeItem("user")
+        NavigationManager.NavigateTo("/Login", true);
+    }
+}

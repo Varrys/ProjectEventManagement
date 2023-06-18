@@ -1,7 +1,10 @@
 ﻿@page "/Events"
 @using BusinessLogic.Entities
+@using System.Text.Json
+@using System.Diagnostics
 @inject HttpClient httpClient
-
+@inject NavigationManager Navigation
+@inject IJSRuntime JSRuntime
 <h3>Event List</h3>
 
 @if (events == null)
@@ -10,49 +13,49 @@
 }
 <table class="table">
     <thead>
-        <tr>
-            <th>Event ID</th>
-            <th>Name</th>
-            <th>Date</th>
-            <th>Location</th>
-            <th>Description</th>
-            <th>Max Capacity</th>
-            <th>Tickets</th>
-        </tr>
+    <tr>
+        <th>Event ID</th>
+        <th>Name</th>
+        <th>Date</th>
+        <th>Location</th>
+        <th>Description</th>
+        <th>Max Capacity</th>
+        <th>Tickets</th>
+    </tr>
     </thead>
     <tbody>
-        @foreach (var item in events)
-        {
-            <tr>
-                <td>@item.EventId</td>
-                <td>@item.Name</td>
-                <td>@item.Date.ToString("yyyy-MM-dd HH:mm:ss")</td>
-                <td>@item.Location</td>
-                <td>@item.Description</td>
-                <td>@item.MaxCapacity</td>
-                <td>
-                    @if (item.Tickets != null && item.Tickets.Count > 0)
-                    {
-                        <ul>
-                            @foreach (var ticket in item.Tickets)
-                            {
-                                <li>
-                                    <p>Ticket ID: @ticket.TicketId</p>
-                                    <p>Price: @ticket.Price.ToString("0.00")</p>
-                                    <p>Name: @ticket.Name</p>
-                                    <p>Description: @ticket.Description</p>
-                                    <p>Quantity: @ticket.Quantity</p>
-                                </li>
-                            }
-                        </ul>
-                    }
-                    else
-                    {
-                        <p>No tickets available</p>
-                    }
-                </td>
-            </tr>
-        }
+    @foreach (var item in events)
+    {
+        <tr>
+            <td>@item.EventId</td>
+            <td>@item.Name</td>
+            <td>@item.Date.ToString("yyyy-MM-dd HH:mm:ss")</td>
+            <td>@item.Location</td>
+            <td>@item.Description</td>
+            <td>@item.MaxCapacity</td>
+            <td>
+                @if (item.Tickets != null && item.Tickets.Count > 0)
+                {
+                    <ul>
+                        @foreach (var ticket in item.Tickets)
+                        {
+                            <li>
+                                <p>Ticket ID: @ticket.TicketId</p>
+                                <p>Price: @ticket.Price.ToString("0.00")</p>
+                                <p>Name: @ticket.Name</p>
+                                <p>Description: @ticket.Description</p>
+                                <p>Quantity: @ticket.Quantity</p>
+                            </li>
+                        }
+                    </ul>
+                }
+                else
+                {
+                    <p>No tickets available</p>
+                }
+            </td>
+        </tr>
+    }
     </tbody>
 </table>
 
@@ -63,15 +66,15 @@
     <form @onsubmit="AddEvent">
         <div class="form-group">
             <label for="eventName">Name:</label>
-            <input id="eventName" type="text" class="form-control" @bind="@newEvent.Name" required />
+            <input id="eventName" type="text" class="form-control" @bind="@newEvent.Name" required/>
         </div>
         <div class="form-group">
             <label for="eventDate">Date:</label>
-            <input id="eventDate" type="datetime-local" class="form-control" @bind="@newEvent.Date" required />
+            <input id="eventDate" type="datetime-local" class="form-control" @bind="@newEvent.Date" required/>
         </div>
         <div class="form-group">
             <label for="eventLocation">Location:</label>
-            <input id="eventLocation" type="text" class="form-control" @bind="@newEvent.Location" required />
+            <input id="eventLocation" type="text" class="form-control" @bind="@newEvent.Location" required/>
         </div>
         <div class="form-group">
             <label for="eventDescription">Description:</label>
@@ -79,7 +82,7 @@
         </div>
         <div class="form-group">
             <label for="eventMaxCapacity">Max Capacity:</label>
-            <input id="eventMaxCapacity" type="number" class="form-control" @bind="@newEvent.MaxCapacity" required />
+            <input id="eventMaxCapacity" type="number" class="form-control" @bind="@newEvent.MaxCapacity" required/>
         </div>
         <button type="submit" class="btn btn-primary">Add Event</button>
     </form>
@@ -91,16 +94,35 @@ else
 
 @code {
     private Event[] events;
-    private Event newEvent = new Event();
+    private readonly Event newEvent = new();
     private Event addedEvent;
+    private AuthDto CurrentUser { get; set; }
 
     protected override async Task OnInitializedAsync()
     {
+        
         events = await httpClient.GetFromJsonAsync<Event[]>("http://localhost:5052/api/Events");
-    }
+        
+        CurrentUser = await GetCurrentUser();
+       }
 
     private async Task AddEvent()
     {
-        addedEvent = await httpClient.PostAsJsonAsync<Event>("http://localhost:5052/api/Events", newEvent).Result.Content.ReadFromJsonAsync<Event>();
+        addedEvent = await httpClient.PostAsJsonAsync("http://localhost:5052/api/Events", newEvent).Result.Content.ReadFromJsonAsync<Event>();
+    }
+    private async Task<AuthDto> GetCurrentUser()
+    {
+        var userJson = await JSRuntime.InvokeAsync<string>("sessionStorage.getItem", "user");
+        if (!string.IsNullOrEmpty(userJson))
+        {
+            var currentUser = JsonSerializer.Deserialize<AuthDto>(userJson);
+            if (!currentUser.Role.Equals("User", StringComparison.OrdinalIgnoreCase))
+            {
+                Navigation.NavigateTo("/login", true);
+            }
+            return currentUser;
+        }
+        Navigation.NavigateTo("/login", true);
+        return null;
     }
 }
