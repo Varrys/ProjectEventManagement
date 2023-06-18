@@ -1,11 +1,19 @@
-﻿@page "/Login"
+﻿@page "/Register"
 @using BusinessLogic.Entities
 @using System.Text.Json
 @inject HttpClient HttpClient
 @inject NavigationManager NavigationManager
 @inject IJSRuntime JSRuntime
 
-<h3>Login</h3>
+<h3>Register</h3>
+<p>
+     <label for="name">Name:</label>
+     <input type="text" id="name" @bind="@Name"/>
+</p>
+<p>
+    <label for="email">Email:</label>
+    <input type="email" id="email" @bind="@Email"/>
+</p>
 <p>
     <label for="username">Username:</label>
     <input type="text" id="username" @bind="@Username"/>
@@ -14,53 +22,58 @@
     <label for="password">Password:</label>
     <input type="password" id="password" @bind="@Password"/>
 </p>
-<p>@loginMessage</p>
+
+<p>@registerMessage</p>
 <p>
-    <button @onclick="PerformLogin">Login</button>
+    <button @onclick="PerformRegister">Register</button>
 </p>
 
 @code {
+    private string Email { get; set; }
     private string Username { get; set; }
     private string Password { get; set; }
-    private string loginMessage;
+    private string Name { get; set; }
+    private string registerMessage;
 
     protected override async Task OnInitializedAsync()
     {
         var currentUser = await GetCurrentUser();
         if (currentUser != null)
         {
-    // User is already logged in, redirect to the home page or perform other actions
             NavigationManager.NavigateTo("/", true);
         }
     }
 
-    private async Task PerformLogin()
+    private async Task PerformRegister()
     {
-        var request = new AuthenticationRequest
+        var request = new RegistrationRequest
         {
+            Email = Email,
             Username = Username,
-            Password = Password
+            Password = Password,
+            Name = Name,
+            Role = "User"
         };
 
-        var response = await HttpClient.PostAsJsonAsync("http://localhost:5052/api/auth/login", request);
+        var response = await HttpClient.PostAsJsonAsync("http://localhost:5052/api/auth/register", request);
 
         if (response.IsSuccessStatusCode)
         {
-            var authenticationResponse = await response.Content.ReadFromJsonAsync<AuthenticationResponse>();
-            var token = authenticationResponse.Token;
-            var auth = authenticationResponse.Auth;
+            var registrationResponse = await response.Content.ReadFromJsonAsync<RegistrationResponse>();
+            var token = registrationResponse.Token;
+            var auth = registrationResponse.Auth;
 
             var userJson = JsonSerializer.Serialize(auth);
             await JSRuntime.InvokeAsync<object>("sessionStorage.setItem", "user", userJson);
 
             NavigationManager.NavigateTo("/", true);
 
-            loginMessage = "Login bem-sucedido!";
+            registerMessage = "Registration successful!";
         }
         else
         {
             var errorMessage = await response.Content.ReadAsStringAsync();
-            loginMessage = "Login falhou: " + errorMessage;
+            registerMessage = "Registration failed: " + errorMessage;
         }
     }
 
@@ -69,5 +82,4 @@
         var userJson = await JSRuntime.InvokeAsync<string>("sessionStorage.getItem", "user");
         return JsonSerializer.Deserialize<AuthDto>(userJson);
     }
-
 }
