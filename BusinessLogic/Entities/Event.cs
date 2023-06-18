@@ -10,7 +10,7 @@ public class Event
     public int MaxCapacity { get; set; }
     public Guid? UserId { get; set; }
 
-    public virtual User User { get; set; } = null!;
+    public virtual User? User { get; set; }
     public virtual ICollection<Ticket> Tickets { get; set; } = new List<Ticket>();
     public virtual ICollection<UserEvent> UserEvents { get; set; } = new List<UserEvent>();
 }

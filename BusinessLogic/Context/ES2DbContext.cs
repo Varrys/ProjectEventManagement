@@ -134,10 +134,7 @@ public partial class ES2DbContext : DbContext
                 .HasColumnName("maxcapacity")
                 .IsRequired();
             entity.Property(e => e.UserId).HasColumnName("userid");
-
-            entity.HasOne(d => d.User).WithMany(p => p.Events)
-                .HasForeignKey(d => d.UserId)
-                .HasConstraintName("events_userid_fkey");
+       
         });
 
         modelBuilder.Entity<Ticket>(entity =>
@@ -162,10 +159,6 @@ public partial class ES2DbContext : DbContext
                 .HasColumnName("quantity")
                 .IsRequired();
             entity.Property(e => e.EventId).HasColumnName("eventid");
-
-            entity.HasOne(d => d.Event).WithMany(p => p.Tickets)
-                .HasForeignKey(d => d.EventId)
-                .HasConstraintName("tickets_eventid_fkey");
         });
 
         modelBuilder.Entity<UserEvent>(entity =>
@@ -180,13 +173,6 @@ public partial class ES2DbContext : DbContext
                 .HasMaxLength(255)
                 .HasColumnName("feedback")
                 .IsRequired();
-
-            entity.HasOne(d => d.Event).WithMany(p => p.UserEvents)
-                .HasForeignKey(d => d.EventId)
-                .HasConstraintName("userevents_eventid_fkey");
-            entity.HasOne(d => d.User).WithMany(p => p.UserEvents)
-                .HasForeignKey(d => d.UserId)
-                .HasConstraintName("userevents_userid_fkey");
         });
 
         OnModelCreatingPartial(modelBuilder);

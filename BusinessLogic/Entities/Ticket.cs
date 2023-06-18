@@ -8,5 +8,4 @@ public class Ticket
     public string Description { get; set; } = null!;
     public int Quantity { get; set; }
     public Guid EventId { get; set; }
-    public virtual Event Event { get; set; } = null!;
 }

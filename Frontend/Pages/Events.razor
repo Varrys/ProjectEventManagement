@@ -1,11 +1,10 @@
 ﻿@page "/Events"
 @using BusinessLogic.Entities
 @using System.Text.Json
-@using System.Diagnostics
 @inject HttpClient httpClient
 @inject NavigationManager Navigation
 @inject IJSRuntime JSRuntime
-<h3>Event List</h3>
+<h3>Eventos Gerais</h3>
 
 @if (events == null)
 {
@@ -26,90 +25,54 @@
     <tbody>
     @foreach (var item in events)
     {
-        <tr>
-            <td>@item.EventId</td>
-            <td>@item.Name</td>
-            <td>@item.Date.ToString("yyyy-MM-dd HH:mm:ss")</td>
-            <td>@item.Location</td>
-            <td>@item.Description</td>
-            <td>@item.MaxCapacity</td>
-            <td>
-                @if (item.Tickets != null && item.Tickets.Count > 0)
-                {
-                    <ul>
-                        @foreach (var ticket in item.Tickets)
-                        {
-                            <li>
-                                <p>Ticket ID: @ticket.TicketId</p>
-                                <p>Price: @ticket.Price.ToString("0.00")</p>
-                                <p>Name: @ticket.Name</p>
-                                <p>Description: @ticket.Description</p>
-                                <p>Quantity: @ticket.Quantity</p>
-                            </li>
-                        }
-                    </ul>
-                }
-                else
-                {
-                    <p>No tickets available</p>
-                }
-            </td>
-        </tr>
+        if (item.UserId.Equals(CurrentUser.UserId))
+        {
+            <tr>
+                <td>@item.EventId</td>
+                <td>@item.Name</td>
+                <td>@item.Date.ToString("yyyy-MM-dd HH:mm:ss")</td>
+                <td>@item.Location</td>
+                <td>@item.Description</td>
+                <td>@item.MaxCapacity</td>
+                <td>
+                    @if (item.Tickets != null && item.Tickets.Count > 0)
+                    {
+                        <ul>
+                            @foreach (var ticket in item.Tickets)
+                            {
+                                <li>
+                                    <p>Ticket ID: @ticket.TicketId</p>
+                                    <p>Price: @ticket.Price.ToString("0.00")</p>
+                                    <p>Name: @ticket.Name</p>
+                                    <p>Description: @ticket.Description</p>
+                                    <p>Quantity: @ticket.Quantity</p>
+                                </li>
+                            }
+                        </ul>
+                    }
+                    else
+                    {
+                        <p>No tickets available</p>
+                    }
+                </td>
+            </tr>
+        }
     }
     </tbody>
 </table>
 
-<h3>Add Event</h3>
-
-@if (addedEvent == null)
-{
-    <form @onsubmit="AddEvent">
-        <div class="form-group">
-            <label for="eventName">Name:</label>
-            <input id="eventName" type="text" class="form-control" @bind="@newEvent.Name" required/>
-        </div>
-        <div class="form-group">
-            <label for="eventDate">Date:</label>
-            <input id="eventDate" type="datetime-local" class="form-control" @bind="@newEvent.Date" required/>
-        </div>
-        <div class="form-group">
-            <label for="eventLocation">Location:</label>
-            <input id="eventLocation" type="text" class="form-control" @bind="@newEvent.Location" required/>
-        </div>
-        <div class="form-group">
-            <label for="eventDescription">Description:</label>
-            <textarea id="eventDescription" class="form-control" @bind="@newEvent.Description" required></textarea>
-        </div>
-        <div class="form-group">
-            <label for="eventMaxCapacity">Max Capacity:</label>
-            <input id="eventMaxCapacity" type="number" class="form-control" @bind="@newEvent.MaxCapacity" required/>
-        </div>
-        <button type="submit" class="btn btn-primary">Add Event</button>
-    </form>
-}
-else
-{
-    <p>Event added successfully!!</p>
-}
-
 @code {
     private Event[] events;
     private readonly Event newEvent = new();
-    private Event addedEvent;
     private AuthDto CurrentUser { get; set; }
 
     protected override async Task OnInitializedAsync()
     {
         
-        events = await httpClient.GetFromJsonAsync<Event[]>("http://localhost:5052/api/Events");
-        
+    events = await httpClient.GetFromJsonAsync<Event[]>("http://localhost:5052/api/Events");
         CurrentUser = await GetCurrentUser();
-       }
+   }
 
-    private async Task AddEvent()
-    {
-        addedEvent = await httpClient.PostAsJsonAsync("http://localhost:5052/api/Events", newEvent).Result.Content.ReadFromJsonAsync<Event>();
-    }
     private async Task<AuthDto> GetCurrentUser()
     {
         var userJson = await JSRuntime.InvokeAsync<string>("sessionStorage.getItem", "user");

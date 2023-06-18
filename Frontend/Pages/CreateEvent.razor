@@ -1,0 +1,169 @@
+﻿@page "/CreateEvent"
+@using BusinessLogic.Entities
+@using System.Text.Json
+@inject HttpClient httpClient
+@inject NavigationManager Navigation
+@inject IJSRuntime JSRuntime
+
+<h3>Os meus eventos</h3>
+<link href="/css/list-user.css" rel="stylesheet" />
+<button @onclick="OpenModal">Add Event</button>
+
+<div class="modal" style="display: @(isModalOpen ? "block" : "none")">
+    <div class="modal-content">
+        <span class="close" @onclick="CloseModal">&times;</span>
+        <h4>Add Event</h4>
+        <p>
+            <label for="modal-name">Name:</label>
+            <input type="text" id="modal-name" @bind="@ModalName" />
+        </p>
+        <p>
+            <label for="modal-date">Date:</label>
+            <input type="datetime-local" id="modal-date" @bind="@ModalDate" />
+        </p>
+        <p>
+            <label for="modal-location">Location:</label>
+            <input type="text" id="modal-location" @bind="@ModalLocation" />
+        </p>
+        <p>
+            <label for="modal-description">Description:</label>
+            <textarea id="modal-description" @bind="@ModalDescription"></textarea>
+        </p>
+        <p>
+            <label for="modal-maxcapacity">Max Capacity:</label>
+            <input type="number" id="modal-maxcapacity" @bind="@ModalMaxCapacity" />
+        </p>
+        <p>@modalAddEventMessage</p>
+        <p>
+            <button @onclick="PerformAddEvent">Save</button>
+            <button @onclick="CloseModal">Cancel</button>
+        </p>
+    </div>
+</div>
+
+@if (events == null)
+{
+    <p>Loading...</p>
+}
+<table class="table">
+    <thead>
+        <tr>
+            <th>Event ID</th>
+            <th>Name</th>
+            <th>Date</th>
+            <th>Location</th>
+            <th>Description</th>
+            <th>Max Capacity</th>
+            <th>Tickets</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var item in events)
+        {
+            if (item.UserId.Equals(CurrentUser.UserId))
+            {
+                <tr>
+                    <td>@item.EventId</td>
+                    <td>@item.Name</td>
+                    <td>@item.Date.ToString("yyyy-MM-dd HH:mm:ss")</td>
+                    <td>@item.Location</td>
+                    <td>@item.Description</td>
+                    <td>@item.MaxCapacity</td>
+                    <td>
+                        @if (item.Tickets != null && item.Tickets.Count > 0)
+                        {
+                            <ul>
+                                @foreach (var ticket in item.Tickets)
+                                {
+                                    <li>
+                                        <p>Ticket ID: @ticket.TicketId</p>
+                                        <p>Price: @ticket.Price.ToString("0.00")</p>
+                                        <p>Name: @ticket.Name</p>
+                                        <p>Description: @ticket.Description</p>
+                                        <p>Quantity: @ticket.Quantity</p>
+                                    </li>
+                                }
+                            </ul>
+                        }
+                        else
+                        {
+                            <p>No tickets available</p>
+                        }
+                    </td>
+                </tr>
+            }
+        }
+    </tbody>
+</table>
+
+@code {
+    private Event[] events;
+    private readonly Event newEvent = new();
+    private AuthDto CurrentUser { get; set; }
+    private string ModalName { get; set; }
+    private DateTime ModalDate { get; set; }
+    private string ModalLocation { get; set; }
+    private string ModalDescription { get; set; }
+    private int ModalMaxCapacity { get; set; }
+    private string modalAddEventMessage;
+    private bool isModalOpen;
+
+    protected override async Task OnInitializedAsync()
+    {
+        events = await httpClient.GetFromJsonAsync<Event[]>("http://localhost:5052/api/Events");
+        CurrentUser = await GetCurrentUser();
+    }
+
+    private async Task<AuthDto> GetCurrentUser()
+    {
+        var userJson = await JSRuntime.InvokeAsync<string>("sessionStorage.getItem", "user");
+        if (!string.IsNullOrEmpty(userJson))
+        {
+            var currentUser = JsonSerializer.Deserialize<AuthDto>(userJson);
+            if (!currentUser.Role.Equals("User", StringComparison.OrdinalIgnoreCase))
+            {
+                Navigation.NavigateTo("/login", true);
+            }
+            return currentUser;
+        }
+        Navigation.NavigateTo("/login", true);
+        return null;
+    }
+
+    private void OpenModal()
+    {
+        isModalOpen = true;
+    }
+
+    private void CloseModal()
+    {
+        isModalOpen = false;
+        modalAddEventMessage = null;
+    }
+
+    private async Task PerformAddEvent()
+    {
+        var @event = new Event
+        {
+            Name = ModalName,
+            Date = ModalDate,
+            Location = ModalLocation,
+            Description = ModalDescription,
+            MaxCapacity = ModalMaxCapacity,
+            UserId = CurrentUser.UserId
+        };
+
+        var response = await httpClient.PostAsJsonAsync("http://localhost:5052/api/Events", @event);
+
+        if (response.IsSuccessStatusCode)
+        {
+            modalAddEventMessage = "Event added successfully!";
+            CloseModal();
+        }
+        else
+        {
+            var errorMessage = await response.Content.ReadAsStringAsync();
+            modalAddEventMessage = "Failed to add event: " + errorMessage;
+        }
+    }
+}
