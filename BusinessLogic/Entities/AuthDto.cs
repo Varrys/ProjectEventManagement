@@ -7,4 +7,6 @@ public class AuthDto
     public string Username { get; set; }
 
     public string Role { get; set; }
+    
+    public bool Enable { get; set; }
 }

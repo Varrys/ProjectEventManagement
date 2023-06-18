@@ -8,11 +8,11 @@
 <h3>Login</h3>
 <p>
     <label for="username">Username:</label>
-    <input type="text" id="username" @bind="@Username"/>
+    <input type="text" id="username" @bind="@Username" />
 </p>
 <p>
     <label for="password">Password:</label>
-    <input type="password" id="password" @bind="@Password"/>
+    <input type="password" id="password" @bind="@Password" />
 </p>
 <p>@loginMessage</p>
 <p>
@@ -29,7 +29,7 @@
         var currentUser = await GetCurrentUser();
         if (currentUser != null)
         {
-    // User is already logged in, redirect to the home page or perform other actions
+            // User is already logged in, redirect to the home page or perform other actions
             NavigationManager.NavigateTo("/", true);
         }
     }
@@ -50,6 +50,18 @@
             var token = authenticationResponse.Token;
             var auth = authenticationResponse.Auth;
 
+            if (auth == null)
+            {
+                loginMessage = "Login falhou: Usuário não encontrado.";
+                return;
+            }
+
+            if (auth.Enable.Equals("false"))
+            {
+                loginMessage = "Login falhou: Sua conta está desativada.";
+                return;
+            }
+
             var userJson = JsonSerializer.Serialize(auth);
             await JSRuntime.InvokeAsync<object>("sessionStorage.setItem", "user", userJson);
 
@@ -67,7 +79,13 @@
     private async Task<AuthDto> GetCurrentUser()
     {
         var userJson = await JSRuntime.InvokeAsync<string>("sessionStorage.getItem", "user");
-        return JsonSerializer.Deserialize<AuthDto>(userJson);
-    }
+        var auth = JsonSerializer.Deserialize<AuthDto>(userJson);
+        
+        if (auth != null && !auth.Enable)
+        {
+            return null;
+        }
 
+        return auth;
+    }
 }

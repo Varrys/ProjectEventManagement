@@ -33,7 +33,10 @@ namespace Backend.Controllers
                 u.Username == request.Username && u.Password == request.Password);
 
             if (user == null) return Unauthorized();
-
+            if (!user.Enable)
+            {
+                return BadRequest("Conta desativada.");
+            }
             var token = GenerateToken(user);
 
             var response = new AuthenticationResponse
@@ -43,7 +46,8 @@ namespace Backend.Controllers
                 {
                     UserId = user.UserId,
                     Username = user.Username,
-                    Role = user.Role
+                    Role = user.Role,
+                    Enable = user.Enable
                 }
             };
 
@@ -75,7 +79,7 @@ namespace Backend.Controllers
                 {
                     UserId = newUser.UserId,
                     Username = newUser.Username,
-                    Role = newUser.Role
+                    Role = newUser.Role,
                 }
             };
 

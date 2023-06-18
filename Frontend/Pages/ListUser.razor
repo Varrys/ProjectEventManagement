@@ -1,0 +1,182 @@
+﻿@page "/ListUser"
+@using BusinessLogic.Entities
+@inject HttpClient HttpClient
+
+<link href="/css/list-user.css" rel="stylesheet" />
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css" rel="stylesheet" />
+
+<button @onclick="OpenModal">Register User</button>
+<div class="modal" style="display: @(isModalOpen ? "block" : "none")">
+    <div class="modal-content">
+        <span class="close" @onclick="CloseModal">&times;</span>
+        <h4>Register User</h4>
+        <p>
+            <label for="modal-name">Name:</label>
+            <input type="text" id="modal-name" @bind="@ModalName" />
+        </p>
+        <p>
+            <label for="modal-email">Email:</label>
+            <input type="email" id="modal-email" @bind="@ModalEmail" />
+        </p>
+        <p>
+            <label for="modal-username">Username:</label>
+            <input type="text" id="modal-username" @bind="@ModalUsername" />
+        </p>
+        <p>
+            <label for="modal-password">Password:</label>
+            <input type="password" id="modal-password" @bind="@ModalPassword" />
+        </p>
+        <p>
+            <label for="modal-role">Role:</label>
+            <select id="modal-role" @bind="@ModalRole">
+                <option value="User">User</option>
+                <option value="UserManager">UserManager</option>
+                <option value="Admin">Admin</option>
+            </select>
+        </p>
+        <p>@modalRegisterMessage</p>
+        <p>
+            <button @onclick="PerformRegister">Guardar</button>
+            <button @onclick="CloseModal">Cancelar</button>
+        </p>
+    </div>
+</div>
+
+@if (users?.Length > 0)
+{
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Name</th>
+                <th>Email</th>
+                <th>Data Criação</th>
+                <th>Role</th>
+                <th>Estado</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var user in users)
+            {
+                <tr>
+                    <td>@user.Name</td>
+                    <td>@user.Email</td>
+                    <td>@user.CreatedAt</td>
+                    <td>@user.Role</td>
+                    <td>
+                        <button class="action-icon" @onclick="() => ToggleUserVisibility(user.UserId)">
+                            <i class="@(user.Enable ? "fas fa-eye" : "fas fa-eye-slash")"></i>
+                        </button>
+                    </td>
+                    <td>
+                        <button>
+                            <i class="fas fa-edit"></i>
+                        </button>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+else
+{
+    <p>No users found.</p>
+}
+
+@code {
+    private string ModalEmail { get; set; }
+    private string ModalUsername { get; set; }
+    private string ModalPassword { get; set; }
+    private string ModalName { get; set; }
+    private string ModalRole { get; set; } = "User";
+    private string modalRegisterMessage;
+    private bool isModalOpen;
+
+    private User[] users;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadUsers();
+    }
+
+    private void OpenModal()
+    {
+        isModalOpen = true;
+    }
+
+    private void CloseModal()
+    {
+        isModalOpen = false;
+        modalRegisterMessage = null;
+    }
+
+    private async Task LoadUsers()
+    {
+        users = await HttpClient.GetFromJsonAsync<User[]>("http://localhost:5052/api/Users");
+        users = users.OrderBy(u => u.CreatedAt).ToArray();
+    }
+
+    private async Task PerformRegister()
+    {
+        var user = new User
+        {
+            Email = ModalEmail,
+            Username = ModalUsername,
+            Password = ModalPassword,
+            Name = ModalName,
+            Role = ModalRole,
+            Enable = true
+        };
+
+        var existingEmail = users.FirstOrDefault(u => u.Email.Equals(user.Email, StringComparison.OrdinalIgnoreCase));
+        if (existingEmail != null)
+        {
+            modalRegisterMessage = "Email already exists.";
+            return;
+        }
+
+        var existingUsername = users.FirstOrDefault(u => u.Username.Equals(user.Username, StringComparison.OrdinalIgnoreCase));
+        if (existingUsername != null)
+        {
+            modalRegisterMessage = "Username already exists.";
+            return;
+        }
+
+        var response = await HttpClient.PostAsJsonAsync("http://localhost:5052/api/Users", user);
+
+        if (response.IsSuccessStatusCode)
+        {
+            var createdUser = await response.Content.ReadFromJsonAsync<User>();
+
+            modalRegisterMessage = "User registration successful!";
+            CloseModal();
+            await LoadUsers();
+        }
+        else
+        {
+            var errorMessage = await response.Content.ReadAsStringAsync();
+            modalRegisterMessage = "User registration failed: " + errorMessage;
+        }
+    }
+
+    private async Task ToggleUserVisibility(Guid userId)
+    {
+        var user = users.FirstOrDefault(u => u.UserId.Equals(userId));
+        if (user != null)
+        {
+            var originalId = user.UserId;
+            var originalCreatedAt = user.CreatedAt;
+
+            user.Enable = !user.Enable;
+            user.UserId = originalId;
+            user.CreatedAt = originalCreatedAt;
+
+            var response = await HttpClient.PutAsJsonAsync($"http://localhost:5052/api/Users/{userId}", user);
+
+            if (response.IsSuccessStatusCode)
+            {
+                await LoadUsers();
+            }
+        }
+    }
+}
