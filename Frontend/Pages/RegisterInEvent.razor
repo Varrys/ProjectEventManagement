@@ -1,0 +1,97 @@
+﻿@page "/registerinevents"
+@using BusinessLogic.Entities
+@using System.Text.Json
+@using System.Net.Http.Json
+@using System.Text.Json
+@using System.Net.Http.Json
+@inject HttpClient httpClient
+
+<h3>Eventos e Atividades</h3>
+
+@if (eventActivities == null)
+{
+    <p>Loading...</p>
+}
+<table class="table">
+    <thead>
+        <tr>
+            <th>Event Name</th>
+            <th>Date</th>
+            <th>Location</th>
+            <th>Description</th>
+            <th>Max Capacity</th>
+            <th>Activities</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var eventActivity in eventActivities)
+        {
+            <tr>
+                <td>@eventActivity.Event.Name</td>
+                <td>@eventActivity.Event.Date.ToString("yyyy-MM-dd HH:mm:ss")</td>
+                <td>@eventActivity.Event.Location</td>
+                <td>@eventActivity.Event.Description</td>
+                <td>@eventActivity.Event.MaxCapacity</td>
+                <td>
+                    @if (eventActivity.Activities != null && eventActivity.Activities.Count > 0)
+                    {
+                        <ul>
+                            @foreach (var activity in eventActivity.Activities)
+                            {
+                                <li>
+                                    <input type="checkbox" @onchange="() => RegisterActivity(eventActivity.Event.EventId, activity.ActivityId)" />
+                                    <p>Name: @activity.Name</p>
+                                    <p>Date: @activity.Datetime.ToString("yyyy-MM-dd HH:mm:ss")</p>
+                                    <p>Description: @activity.Description</p>
+                                </li>
+                            }
+                        </ul>
+                    }
+                    else
+                    {
+                        <p>No activities available</p>
+                    }
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+@code {
+    private List<EventActivity> eventActivities;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var events = await httpClient.GetFromJsonAsync<List<Event>>("http://localhost:5052/api/Events");
+
+        eventActivities = new List<EventActivity>();
+
+        foreach (var @event in events)
+        {
+            var activities = await httpClient.GetFromJsonAsync<List<Activity>>($"http://localhost:5052/api/Activities?eventId={@event.EventId}");
+
+            eventActivities.Add(new EventActivity
+            {
+                Event = @event,
+                Activities = activities
+            });
+        }
+    }
+
+    private async Task RegisterActivity(Guid eventId, Guid activityId)
+    {
+        var userActivity = new UserActivity
+        {
+            EventId = eventId,
+            ActivityId = activityId
+        };
+
+        await httpClient.PostAsJsonAsync("http://localhost:5052/api/UserActivities", userActivity);
+    }
+
+    private class EventActivity
+    {
+        public Event Event { get; set; }
+        public List<Activity> Activities { get; set; }
+    }
+}

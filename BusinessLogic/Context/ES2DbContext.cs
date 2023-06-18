@@ -23,6 +23,8 @@ namespace BusinessLogic.Context
         public virtual DbSet<Activity> Activities { get; set; }
         
         public DbSet<UserActivity> UserActivities { get; set; }
+        
+        public DbSet<Feedback> Feedbacks { get; set; }
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
@@ -208,9 +210,21 @@ namespace BusinessLogic.Context
                 entity.Property(e => e.ActivityId).HasColumnName("activityid");
 
             });
+            
+            modelBuilder.Entity<Feedback>(entity =>
+            {
+                entity.ToTable("feedbacks");
 
-            
-            
+                entity.HasKey(e => e.FeedbackId);
+
+                entity.Property(e => e.FeedbackId).HasColumnName("feedbackid").HasDefaultValueSql("uuid_generate_v4()");
+                entity.Property(e => e.UserId).HasColumnName("userid");
+                entity.Property(e => e.EventId).HasColumnName("eventid");
+                entity.Property(e => e.Datetime).HasColumnName("datetime").IsRequired();
+                entity.Property(e => e.FeedbackT).HasColumnName("feedback").HasMaxLength(255).IsRequired();
+                entity.Property(e => e.Value).HasColumnName("value").IsRequired();
+                
+            });
             OnModelCreatingPartial(modelBuilder);
         }
 

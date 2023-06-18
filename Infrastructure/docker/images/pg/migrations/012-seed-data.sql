@@ -38,3 +38,8 @@ INSERT INTO userActivities (eventId, activityId)
 VALUES ((SELECT eventId FROM events LIMIT 1 OFFSET 0), (SELECT activityid FROM activities LIMIT 1 OFFSET 0)),
        ((SELECT eventId FROM events LIMIT 1 OFFSET 1), (SELECT activityid FROM activities LIMIT 1 OFFSET 1)),
        ((SELECT eventId FROM events LIMIT 1 OFFSET 2), (SELECT activityid FROM activities LIMIT 1 OFFSET 2));
+
+INSERT INTO Feedbacks (userId, eventId, datetime, feedback, value)
+VALUES ((SELECT userId FROM users LIMIT 1 OFFSET 0), (SELECT eventId FROM events LIMIT 1 OFFSET 0), NOW(), 'Ótimo evento!', 5),
+       ((SELECT userId FROM users LIMIT 1 OFFSET 1), (SELECT eventId FROM events LIMIT 1 OFFSET 1), NOW(), 'Gostei bastante da organização', 4),
+       ((SELECT userId FROM users LIMIT 1 OFFSET 2), (SELECT eventId FROM events LIMIT 1 OFFSET 2), NOW(), 'Podia ter mais atividades', 3);
