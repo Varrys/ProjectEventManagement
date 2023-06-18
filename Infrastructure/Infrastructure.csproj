@@ -40,7 +40,7 @@
         <None Update="docker\images\pg\migrations\007-create-userevents-table.sql">
             <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
         </None>
-        <None Update="docker\images\pg\migrations\008-seed-data.sql">
+        <None Update="docker\images\pg\migrations\012-seed-data.sql">
             <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
         </None>
     </ItemGroup>

@@ -28,3 +28,13 @@ INSERT INTO userEvents (eventid, userid, feedback)
 VALUES ((SELECT eventId FROM events LIMIT 1 OFFSET 0), (SELECT userId FROM users LIMIT 1 OFFSET 0), 'Feedback 1'),
        ((SELECT eventId FROM events LIMIT 1 OFFSET 1), (SELECT userId FROM users LIMIT 1 OFFSET 1), 'Feedback 2'),
        ((SELECT eventId FROM events LIMIT 1 OFFSET 2), (SELECT userId FROM users LIMIT 1 OFFSET 2), 'Feedback 3');
+
+INSERT INTO Activities (name, datetime, description, eventId)
+VALUES ('Atividade 1', '2023-06-19 10:00:00', 'Descrição da Atividade 1',(SELECT eventId FROM events LIMIT 1 OFFSET 0)),
+       ('Atividade 2', '2023-06-20 14:30:00', 'Descrição da Atividade 2', (SELECT eventId FROM events LIMIT 1 OFFSET 1)),
+       ('Atividade 3', '2023-06-21 16:00:00', 'Descrição da Atividade 3', (SELECT eventId FROM events LIMIT 1 OFFSET 2));
+
+INSERT INTO userActivities (eventId, activityId)
+VALUES ((SELECT eventId FROM events LIMIT 1 OFFSET 0), (SELECT activityid FROM activities LIMIT 1 OFFSET 0)),
+       ((SELECT eventId FROM events LIMIT 1 OFFSET 1), (SELECT activityid FROM activities LIMIT 1 OFFSET 1)),
+       ((SELECT eventId FROM events LIMIT 1 OFFSET 2), (SELECT activityid FROM activities LIMIT 1 OFFSET 2));
