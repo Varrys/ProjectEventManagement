@@ -1,11 +1,11 @@
-﻿@page "/Register"
+﻿@page "/Registeruser"
 @using BusinessLogic.Entities
 @using System.Text.Json
 @inject HttpClient HttpClient
 @inject NavigationManager NavigationManager
 @inject IJSRuntime JSRuntime
 
-<h3>Register</h3>
+<h3>Register User</h3>
 <p>
      <label for="name">Name:</label>
      <input type="text" id="name" @bind="@Name"/>
@@ -22,6 +22,14 @@
     <label for="password">Password:</label>
     <input type="password" id="password" @bind="@Password"/>
 </p>
+<p>
+    <label for="role">Role:</label>
+    <select id="role" @bind="@Role">
+        <option value="User">User</option>
+        <option value="UserManager">UserManager</option>
+        <option value="Admin">Admin</option>
+    </select>
+</p>
 
 <p>@registerMessage</p>
 <p>
@@ -33,55 +41,33 @@
     private string Username { get; set; }
     private string Password { get; set; }
     private string Name { get; set; }
+    private string Role { get; set; } = "User";
     private string registerMessage;
-
-    protected override async Task OnInitializedAsync()
-    {
-        var currentUser = await GetCurrentUser();
-        if (currentUser != null)
-        {
-            NavigationManager.NavigateTo("/", true);
-        }
-    }
 
     private async Task PerformRegister()
     {
-        var request = new RegistrationRequest
+        var user = new User
         {
             Email = Email,
             Username = Username,
             Password = Password,
             Name = Name,
-            Role = "User",
-            Enable = true,
-        
+            Role = Role,
+            Enable = true
         };
 
-        var response = await HttpClient.PostAsJsonAsync("http://localhost:5052/api/auth/register", request);
+        var response = await HttpClient.PostAsJsonAsync("http://localhost:5052/api/Users", user);
 
         if (response.IsSuccessStatusCode)
         {
-            var registrationResponse = await response.Content.ReadFromJsonAsync<RegistrationResponse>();
-            var token = registrationResponse.Token;
-            var auth = registrationResponse.Auth;
+            var createdUser = await response.Content.ReadFromJsonAsync<User>();
 
-            var userJson = JsonSerializer.Serialize(auth);
-            await JSRuntime.InvokeAsync<object>("sessionStorage.setItem", "user", userJson);
-
-            NavigationManager.NavigateTo("/", true);
-
-            registerMessage = "Registration successful!";
+            registerMessage = "User registration successful!";
         }
         else
         {
             var errorMessage = await response.Content.ReadAsStringAsync();
-            registerMessage = "Registration failed: " + errorMessage;
+            registerMessage = "User registration failed: " + errorMessage;
         }
-    }
-
-    private async Task<AuthDto> GetCurrentUser()
-    {
-        var userJson = await JSRuntime.InvokeAsync<string>("sessionStorage.getItem", "user");
-        return JsonSerializer.Deserialize<AuthDto>(userJson);
     }
 }
