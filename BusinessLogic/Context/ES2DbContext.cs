@@ -14,8 +14,6 @@ namespace BusinessLogic.Context
         {
         }
 
-        public virtual DbSet<Author> Authors { get; set; }
-        public virtual DbSet<Book> Books { get; set; }
         public virtual DbSet<User> Users { get; set; }
         public virtual DbSet<Event> Events { get; set; }
         public virtual DbSet<Ticket> Tickets { get; set; }
@@ -38,47 +36,6 @@ namespace BusinessLogic.Context
             modelBuilder.HasPostgresExtension("postgis");
             modelBuilder.HasPostgresExtension("uuid-ossp");
             modelBuilder.HasPostgresExtension("topology", "postgis_topology");
-
-            modelBuilder.Entity<Author>(entity =>
-            {
-                entity.HasKey(e => e.Id).HasName("authors_pkey");
-
-                entity.ToTable("authors");
-
-                entity.Property(e => e.Id)
-                    .HasDefaultValueSql("uuid_generate_v4()")
-                    .HasColumnName("id");
-                entity.Property(e => e.BirthDate).HasColumnName("birth_date");
-                entity.Property(e => e.FirstName)
-                    .HasMaxLength(100)
-                    .HasColumnName("first_name");
-                entity.Property(e => e.LastName)
-                    .HasMaxLength(100)
-                    .HasColumnName("last_name");
-            });
-
-            modelBuilder.Entity<Book>(entity =>
-            {
-                entity.HasKey(e => e.Id).HasName("books_pkey");
-
-                entity.ToTable("books");
-
-                entity.Property(e => e.Id)
-                    .HasDefaultValueSql("uuid_generate_v4()")
-                    .HasColumnName("id");
-                entity.Property(e => e.AuthorId).HasColumnName("author_id");
-                entity.Property(e => e.PublicationYear).HasColumnName("publication_year");
-                entity.Property(e => e.Status)
-                    .HasMaxLength(20)
-                    .HasColumnName("status");
-                entity.Property(e => e.Title)
-                    .HasMaxLength(255)
-                    .HasColumnName("title");
-
-                entity.HasOne(d => d.Author).WithMany(p => p.Books)
-                    .HasForeignKey(d => d.AuthorId)
-                    .HasConstraintName("books_author_id_fkey");
-            });
 
             modelBuilder.Entity<User>(entity =>
             {
