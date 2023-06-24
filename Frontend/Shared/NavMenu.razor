@@ -47,7 +47,7 @@
                 </NavLink>
             </div>
         }
-        @if (CurrentUser != null)
+        @if (CurrentUser != null && CurrentUser.Role != "UserManager")
         {
             <div class="nav-item px-3">
                 <NavLink class="nav-link" href="registerinevents">
@@ -55,7 +55,7 @@
                 </NavLink>
             </div>
         }
-        @if (CurrentUser != null && CurrentUser.Role == "User")
+        @if (CurrentUser != null)
         {
             <div class="nav-item px-3">
                 <NavLink class="nav-link" href="events">
