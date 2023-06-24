@@ -7,7 +7,6 @@ public class Activity
         public DateTime Datetime { get; set; }
         public string Description { get; set; } = null!;
         public Guid? EventId { get; set; }
-        public bool IsRegistered { get; set; }
 
         public virtual Event? Event { get; set; }
     

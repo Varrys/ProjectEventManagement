@@ -1,0 +1,261 @@
+﻿@page "/AddActivities"
+@using BusinessLogic.Entities
+@using System.Text.Json
+@inject HttpClient httpClient
+@inject NavigationManager Navigation
+@inject IJSRuntime JSRuntime
+
+<h3>Os meus eventos</h3>
+<link href="/css/list-user.css" rel="stylesheet" />
+
+<table class="table">
+    <thead>
+        <tr>
+            <th>Nome</th>
+            <th>Data</th>
+            <th>Local</th>
+            <th>Descrição</th>
+            <th>Capacidade Máxima</th>
+            <th>Atividades</th>
+            <th>Adicionar Atividade</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var item in events)
+        {
+            if (item.UserId.Equals(CurrentUser.UserId))
+            {
+                <tr>
+                    <td>@item.Name</td>
+                    <td>@item.Date.ToString("yyyy-MM-dd HH:mm:ss")</td>
+                    <td>@item.Location</td>
+                    <td>@item.Description</td>
+                    <td>@item.MaxCapacity</td>
+                    <td>
+                        @if (item.Activities != null && item.Activities.Count > 0)
+                        {
+                            <ul>
+                                @foreach (var activity in item.Activities)
+                                {
+                                    <li>
+                                        <p>Nome: @activity.Name</p>
+                                        <p>Data e Hora: @activity.Datetime.ToString("yyyy-MM-dd HH:mm:ss")</p>
+                                        <p>Descrição: @activity.Description</p>
+                                        <button @onclick="() => RemoveActivity(item.EventId, activity.ActivityId)">Remover</button>
+                                        <button @onclick="() => OpenEditActivityModal(item.EventId, activity.ActivityId)">Editar</button>
+                                    </li>
+                                }
+                            </ul>
+                        }
+                        else
+                        {
+                            <p>Sem atividades disponíveis</p>
+                        }
+                    </td>
+                    <td>
+                        <button @onclick="() => OpenAddActivityModal(item.EventId)">Adicionar Atividade</button>
+                    </td>
+                </tr>
+            }
+        }
+    </tbody>
+</table>
+
+<div class="modal" style="display: @(isAddActivityModalOpen ? "block" : "none")">
+    <div class="modal-content">
+        <span class="close" @onclick="CloseAddActivityModal">&times;</span>
+        <h4>Adicionar Atividade</h4>
+        <p>
+            <label for="activity-name">Nome:</label>
+            <input type="text" id="activity-name" @bind="@ActivityName" />
+        </p>
+        <p>
+            <label for="activity-date">Data e Hora:</label>
+            <input type="datetime-local" id="activity-date" @bind="@ActivityDate" />
+        </p>
+        <p>
+            <label for="activity-description">Descrição:</label>
+            <textarea id="activity-description" @bind="@ActivityDescription"></textarea>
+        </p>
+        <p>@modalAddActivityMessage</p>
+        <p>
+            <button @onclick="PerformAddActivity">Salvar</button>
+            <button @onclick="CloseAddActivityModal">Cancelar</button>
+        </p>
+    </div>
+</div>
+
+<div class="modal" style="display: @(isEditActivityModalOpen ? "block" : "none")">
+    <div class="modal-content">
+        <span class="close" @onclick="CloseEditActivityModal">&times;</span>
+        <h4>Editar Atividade</h4>
+        <p>
+            <label for="edit-activity-name">Nome:</label>
+            <input type="text" id="edit-activity-name" @bind="@ActivityName" />
+        </p>
+        <p>
+            <label for="edit-activity-date">Data e Hora:</label>
+            <input type="datetime-local" id="edit-activity-date" @bind="@ActivityDate" />
+        </p>
+        <p>
+            <label for="edit-activity-description">Descrição:</label>
+            <textarea id="edit-activity-description" @bind="@ActivityDescription"></textarea>
+        </p>
+        <p>@modalEditActivityMessage</p>
+        <p>
+            <button @onclick="PerformEditActivity">Salvar</button>
+            <button @onclick="CloseEditActivityModal">Cancelar</button>
+        </p>
+    </div>
+</div>
+
+@code {
+    private Event[] events;
+    private readonly Event newEvent = new();
+    private AuthDto CurrentUser { get; set; }
+    private bool isAddActivityModalOpen;
+    private bool isEditActivityModalOpen;
+    private Guid selectedEventId = Guid.Empty;
+    private Guid selectedActivityId = Guid.Empty;
+    private string ActivityName { get; set; }
+    private DateTime ActivityDate { get; set; }
+    private string ActivityDescription { get; set; }
+    private string modalAddActivityMessage;
+    private string modalEditActivityMessage;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadEvents();
+        CurrentUser = await GetCurrentUser();
+    }
+
+    private async Task LoadEvents()
+    {
+        events = await httpClient.GetFromJsonAsync<Event[]>("http://localhost:5052/api/Events");
+    }
+
+    private async Task<AuthDto> GetCurrentUser()
+    {
+        var userJson = await JSRuntime.InvokeAsync<string>("sessionStorage.getItem", "user");
+        if (!string.IsNullOrEmpty(userJson))
+        {
+            var currentUser = JsonSerializer.Deserialize<AuthDto>(userJson);
+            if (!currentUser.Role.Equals("User", StringComparison.OrdinalIgnoreCase))
+            {
+                Navigation.NavigateTo("/login", true);
+            }
+            return currentUser;
+        }
+        Navigation.NavigateTo("/login", true);
+        return null;
+    }
+
+    private async Task RemoveActivity(Guid eventId, Guid activityId)
+    {
+        var response = await httpClient.DeleteAsync($"http://localhost:5052/api/Activities/{activityId}");
+
+        if (response.IsSuccessStatusCode)
+        {
+            await LoadEvents();
+        }
+    }
+
+    private void OpenAddActivityModal(Guid eventId)
+    {
+        ActivityName = string.Empty;
+        ActivityDate = DateTime.Now;
+        ActivityDescription = string.Empty;
+        modalAddActivityMessage = string.Empty;
+        selectedEventId = eventId;
+        isAddActivityModalOpen = true;
+    }
+
+    private void CloseAddActivityModal()
+    {
+        isAddActivityModalOpen = false;
+    }
+
+    private void OpenEditActivityModal(Guid eventId, Guid activityId)
+    {
+        selectedEventId = eventId;
+        selectedActivityId = activityId;
+
+        var selectedEvent = events.FirstOrDefault(e => e.EventId == eventId);
+        if (selectedEvent != null)
+        {
+            var selectedActivity = selectedEvent.Activities.FirstOrDefault(a => a.ActivityId == activityId);
+            if (selectedActivity != null)
+            {
+                ActivityName = selectedActivity.Name;
+                ActivityDate = selectedActivity.Datetime;
+                ActivityDescription = selectedActivity.Description;
+            }
+        }
+
+        isEditActivityModalOpen = true;
+    }
+
+    private void CloseEditActivityModal()
+    {
+        isEditActivityModalOpen = false;
+    }
+
+    private async Task PerformAddActivity()
+    {
+        if (string.IsNullOrEmpty(ActivityName) || string.IsNullOrEmpty(ActivityDescription))
+        {
+            modalAddActivityMessage = "Por favor, preencha todos os campos.";
+            return;
+        }
+
+        var newActivity = new Activity
+        {
+            Name = ActivityName,
+            Datetime = ActivityDate,
+            Description = ActivityDescription,
+            EventId = selectedEventId
+        };
+
+        var response = await httpClient.PostAsJsonAsync($"http://localhost:5052/api/Activities", newActivity);
+
+        if (response.IsSuccessStatusCode)
+        {
+            await LoadEvents();
+            isAddActivityModalOpen = false;
+        }
+        else
+        {
+            modalAddActivityMessage = "Ocorreu um erro ao adicionar a atividade.";
+        }
+    }
+
+    private async Task PerformEditActivity()
+    {
+        if (string.IsNullOrEmpty(ActivityName) || string.IsNullOrEmpty(ActivityDescription))
+        {
+            modalEditActivityMessage = "Por favor, preencha todos os campos.";
+            return;
+        }
+
+        var editedActivity = new Activity
+        {
+            ActivityId = selectedActivityId,
+            Name = ActivityName,
+            Datetime = ActivityDate,
+            Description = ActivityDescription,
+            EventId = selectedEventId
+        };
+
+        var response = await httpClient.PutAsJsonAsync($"http://localhost:5052/api/Activities/{selectedActivityId}", editedActivity);
+
+        if (response.IsSuccessStatusCode)
+        {
+            await LoadEvents();
+            isEditActivityModalOpen = false;
+        }
+        else
+        {
+            modalEditActivityMessage = "Ocorreu um erro ao editar a atividade.";
+        }
+    }
+}

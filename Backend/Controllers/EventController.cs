@@ -24,10 +24,13 @@ namespace Backend.Controllers
         [HttpGet]
         public async Task<ActionResult<IEnumerable<dynamic>>> GetEvents()
         {
-            if (_context.Events == null) return NotFound();
+            if (_context.Events == null)
+                return NotFound();
 
-            return await _context
-                .Events.Select(a => new
+            return await _context.Events
+                .Include(e => e.Tickets)
+                .Include(e => e.Activities)
+                .Select(a => new
                 {
                     a.EventId,
                     a.Name,
@@ -44,9 +47,19 @@ namespace Backend.Controllers
                         b.Description,
                         b.Quantity,
                         b.EventId
+                    }),
+                    Activities = a.Activities.Select(c => new 
+                    {
+                        c.ActivityId,
+                        c.Name,
+                        c.Datetime,
+                        c.Description,
+                        c.EventId
                     })
-                }).ToListAsync();
+                })
+                .ToListAsync();
         }
+
 
         // GET: api/Events/5
         [HttpGet("{id}")]

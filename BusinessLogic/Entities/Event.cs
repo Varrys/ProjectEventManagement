@@ -13,4 +13,5 @@ public class Event
     public virtual User? User { get; set; }
     public virtual ICollection<Ticket> Tickets { get; set; } = new List<Ticket>();
     public virtual ICollection<UserEvent> UserEvents { get; set; } = new List<UserEvent>();
+    public virtual ICollection<Activity> Activities { get; set; } = new List<Activity>();
 }
