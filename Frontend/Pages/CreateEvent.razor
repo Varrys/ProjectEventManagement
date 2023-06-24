@@ -41,20 +41,49 @@
     </div>
 </div>
 
+<div class="modal" style="display: @(isTicketModalOpen ? "block" : "none")">
+    <div class="modal-content">
+        <span class="close" @onclick="CloseTicketModal">&times;</span>
+        <h4>Add Tickets</h4>
+        <p>
+            <label for="ticket-price">Price:</label>
+            <input type="number" id="ticket-price" step="0.01" @bind="@TicketPrice" />
+        </p>
+        <p>
+            <label for="ticket-name">Name:</label>
+            <input type="text" id="ticket-name" @bind="@TicketName" />
+        </p>
+        <p>
+            <label for="ticket-description">Description:</label>
+            <textarea id="ticket-description" @bind="@TicketDescription"></textarea>
+        </p>
+        <p>
+            <label for="ticket-quantity">Quantity:</label>
+            <input type="number" id="ticket-quantity" @bind="@TicketQuantity" />
+        </p>
+        <p>@modalAddTicketMessage</p>
+        <p>
+            <button @onclick="PerformAddTicket">Save</button>
+            <button @onclick="CloseTicketModal">Cancel</button>
+        </p>
+    </div>
+</div>
+
 @if (events == null)
 {
     <p>Loading...</p>
 }
+
 <table class="table">
     <thead>
         <tr>
-            <th>Event ID</th>
             <th>Name</th>
             <th>Date</th>
             <th>Location</th>
             <th>Description</th>
             <th>Max Capacity</th>
             <th>Tickets</th>
+            <th>Add Tickets</th>
         </tr>
     </thead>
     <tbody>
@@ -63,7 +92,6 @@
             if (item.UserId.Equals(CurrentUser.UserId))
             {
                 <tr>
-                    <td>@item.EventId</td>
                     <td>@item.Name</td>
                     <td>@item.Date.ToString("yyyy-MM-dd HH:mm:ss")</td>
                     <td>@item.Location</td>
@@ -76,11 +104,10 @@
                                 @foreach (var ticket in item.Tickets)
                                 {
                                     <li>
-                                        <p>Ticket ID: @ticket.TicketId</p>
-                                        <p>Price: @ticket.Price.ToString("0.00")</p>
                                         <p>Name: @ticket.Name</p>
                                         <p>Description: @ticket.Description</p>
-                                        <p>Quantity: @ticket.Quantity</p>
+                                        <p>Quantity: @ticket.Quantity  -> Price: @ticket.Price.ToString("0.00")€/un</p>
+                                        <button @onclick="() => RemoveTicket(item.EventId, ticket.TicketId)">Remove</button>
                                     </li>
                                 }
                             </ul>
@@ -89,6 +116,9 @@
                         {
                             <p>No tickets available</p>
                         }
+                    </td>
+                    <td>
+                        <button @onclick="() => OpenTicketModal(item.EventId)">Add Tickets</button>
                     </td>
                 </tr>
             }
@@ -108,10 +138,23 @@
     private string modalAddEventMessage;
     private bool isModalOpen;
 
+    private Guid selectedEventId;
+    private bool isTicketModalOpen;
+    private decimal TicketPrice { get; set; }
+    private string TicketName { get; set; }
+    private string TicketDescription { get; set; }
+    private int TicketQuantity { get; set; }
+    private string modalAddTicketMessage;
+
     protected override async Task OnInitializedAsync()
     {
-        events = await httpClient.GetFromJsonAsync<Event[]>("http://localhost:5052/api/Events");
+        await LoadEvents();
         CurrentUser = await GetCurrentUser();
+    }
+
+    private async Task LoadEvents()
+    {
+        events = await httpClient.GetFromJsonAsync<Event[]>("http://localhost:5052/api/Events");
     }
 
     private async Task<AuthDto> GetCurrentUser()
@@ -159,11 +202,59 @@
         {
             modalAddEventMessage = "Event added successfully!";
             CloseModal();
+            await LoadEvents(); // Recarrega os eventos após a adição
         }
         else
         {
-            var errorMessage = await response.Content.ReadAsStringAsync();
-            modalAddEventMessage = "Failed to add event: " + errorMessage;
+            modalAddEventMessage = "Failed to add the event. Please try again.";
+        }
+    }
+
+    private void OpenTicketModal(Guid eventId)
+    {
+        selectedEventId = eventId;
+        isTicketModalOpen = true;
+    }
+
+    private void CloseTicketModal()
+    {
+        selectedEventId = Guid.Empty;
+        isTicketModalOpen = false;
+        modalAddTicketMessage = null;
+    }
+
+    private async Task PerformAddTicket()
+    {
+        var ticket = new Ticket
+        {
+            Price = TicketPrice,
+            Name = TicketName,
+            Description = TicketDescription,
+            Quantity = TicketQuantity,
+            EventId = selectedEventId
+        };
+
+        var response = await httpClient.PostAsJsonAsync("http://localhost:5052/api/Tickets", ticket);
+
+        if (response.IsSuccessStatusCode)
+        {
+            modalAddTicketMessage = "Ticket added successfully!";
+            CloseTicketModal();
+            await LoadEvents(); // Recarrega os eventos após a adição do ticket
+        }
+        else
+        {
+            modalAddTicketMessage = "Failed to add the ticket. Please try again.";
+        }
+    }
+
+    private async Task RemoveTicket(Guid eventId, Guid ticketId)
+    {
+        var response = await httpClient.DeleteAsync($"http://localhost:5052/api/Tickets/{ticketId}");
+
+        if (response.IsSuccessStatusCode)
+        {
+            await LoadEvents(); // Recarrega os eventos após a remoção do ticket
         }
     }
 }
