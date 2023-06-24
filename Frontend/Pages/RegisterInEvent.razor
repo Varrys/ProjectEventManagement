@@ -1,14 +1,13 @@
 ﻿@page "/registerinevents"
 @using BusinessLogic.Entities
 @using System.Text.Json
-@using System.Net.Http.Json
-@using System.Text.Json
-@using System.Net.Http.Json
 @inject HttpClient httpClient
+@inject NavigationManager Navigation
+@inject IJSRuntime JSRuntime
 
-<h3>Eventos e Atividades</h3>
+<h3>Eventos</h3>
 
-@if (eventActivities == null)
+@if (events == null)
 {
     <p>Loading...</p>
 }
@@ -20,36 +19,26 @@
             <th>Location</th>
             <th>Description</th>
             <th>Max Capacity</th>
-            <th>Activities</th>
+            <th>Action</th>
         </tr>
     </thead>
     <tbody>
-        @foreach (var eventActivity in eventActivities)
+        @foreach (var item in events)
         {
             <tr>
-                <td>@eventActivity.Event.Name</td>
-                <td>@eventActivity.Event.Date.ToString("yyyy-MM-dd HH:mm:ss")</td>
-                <td>@eventActivity.Event.Location</td>
-                <td>@eventActivity.Event.Description</td>
-                <td>@eventActivity.Event.MaxCapacity</td>
+                <td>@item.Name</td>
+                <td>@item.Date.ToString("yyyy-MM-dd HH:mm:ss")</td>
+                <td>@item.Location</td>
+                <td>@item.Description</td>
+                <td>@item.MaxCapacity</td>
                 <td>
-                    @if (eventActivity.Activities != null && eventActivity.Activities.Count > 0)
+                    @if (IsRegistered(item.EventId))
                     {
-                        <ul>
-                            @foreach (var activity in eventActivity.Activities)
-                            {
-                                <li>
-                                    <input type="checkbox" @onchange="() => RegisterActivity(eventActivity.Event.EventId, activity.ActivityId)" />
-                                    <p>Name: @activity.Name</p>
-                                    <p>Date: @activity.Datetime.ToString("yyyy-MM-dd HH:mm:ss")</p>
-                                    <p>Description: @activity.Description</p>
-                                </li>
-                            }
-                        </ul>
+                        <button @onclick="() => CancelRegistration(item.EventId, currentUser.UserId)">Cancelar Inscrição</button>
                     }
                     else
                     {
-                        <p>No activities available</p>
+                        <button @onclick="() => RegisterEvent(item.EventId)">Registrar no Evento</button>
                     }
                 </td>
             </tr>
@@ -58,40 +47,73 @@
 </table>
 
 @code {
-    private List<EventActivity> eventActivities;
+    private List<Event> events;
+    private List<Guid> registeredEventIds;
+    private AuthDto currentUser;
 
     protected override async Task OnInitializedAsync()
     {
-        var events = await httpClient.GetFromJsonAsync<List<Event>>("http://localhost:5052/api/Events");
+        events = await httpClient.GetFromJsonAsync<List<Event>>("http://localhost:5052/api/Events");
+        currentUser = await GetCurrentUser();
+        await UpdateRegisteredEventIds();
+    }
 
-        eventActivities = new List<EventActivity>();
-
-        foreach (var @event in events)
+    private async Task UpdateRegisteredEventIds()
+    {
+        if (currentUser != null)
         {
-            var activities = await httpClient.GetFromJsonAsync<List<Activity>>($"http://localhost:5052/api/Activities?eventId={@event.EventId}");
-
-            eventActivities.Add(new EventActivity
-            {
-                Event = @event,
-                Activities = activities
-            });
+            registeredEventIds = await GetRegisteredEventIds();
+        }
+        else
+        {
+            registeredEventIds = new List<Guid>();
         }
     }
 
-    private async Task RegisterActivity(Guid eventId, Guid activityId)
+    private async Task<List<Guid>> GetRegisteredEventIds()
     {
-        var userActivity = new UserActivity
+        var userEvents = await httpClient.GetFromJsonAsync<List<UserEvent>>($"http://localhost:5052/api/UserEvents?userId={currentUser.UserId}");
+        if (userEvents != null)
         {
-            EventId = eventId,
-            ActivityId = activityId
-        };
-
-        await httpClient.PostAsJsonAsync("http://localhost:5052/api/UserActivities", userActivity);
+            return userEvents.Select(ue => ue.EventId).ToList();
+        }
+        return new List<Guid>();
     }
 
-    private class EventActivity
+    private bool IsRegistered(Guid eventId)
     {
-        public Event Event { get; set; }
-        public List<Activity> Activities { get; set; }
+        return registeredEventIds.Contains(eventId);
+    }
+
+    private async Task RegisterEvent(Guid eventId)
+    {
+        var userEvent = new UserEvent
+        {
+            EventId = eventId,
+            UserId = currentUser.UserId,
+            Feedback = string.Empty
+        };
+
+        await httpClient.PostAsJsonAsync("http://localhost:5052/api/UserEvents", userEvent);
+        await UpdateRegisteredEventIds();
+    }
+
+    private async Task CancelRegistration(Guid eventId, Guid userId)
+    {
+        if (currentUser != null)
+        {
+            await httpClient.DeleteAsync($"http://localhost:5052/api/UserEvents/{eventId}/{userId}");
+            await UpdateRegisteredEventIds();
+        }
+    }
+
+    private async Task<AuthDto> GetCurrentUser()
+    {
+        var userJson = await JSRuntime.InvokeAsync<string>("sessionStorage.getItem", "user");
+        if (!string.IsNullOrEmpty(userJson))
+        {
+            return JsonSerializer.Deserialize<AuthDto>(userJson);
+        }
+        return null;
     }
 }

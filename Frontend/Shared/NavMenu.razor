@@ -23,36 +23,38 @@
                 <span class="oi oi-home" aria-hidden="true"></span> Home
             </NavLink>
         </div>
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="counter">
-                <span class="oi oi-plus" aria-hidden="true"></span> Counter
-            </NavLink>
-        </div>
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="fetchdata">
-                <span class="oi oi-list-rich" aria-hidden="true"></span> Fetch data
-            </NavLink>
-        </div>
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="createevent">
-                <span class="oi oi-list-rich" aria-hidden="true"></span>Create Event
-            </NavLink>
-        </div>
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="addactivities">
-                <span class="oi oi-list-rich" aria-hidden="true"></span>Add activities
-            </NavLink>
-        </div>
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="searchevents">
-                <span class="oi oi-list-rich" aria-hidden="true"></span>Search Events
-            </NavLink>
-        </div>
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="registerinevents">
-                <span class="oi oi-list-rich" aria-hidden="true"></span>Registar num evento
-            </NavLink>
-        </div>
+        @if (CurrentUser != null)
+        {
+            <div class="nav-item px-3">
+                <NavLink class="nav-link" href="createevent">
+                    <span class="oi oi-list-rich" aria-hidden="true"></span>Create Event
+                </NavLink>
+            </div>
+        }
+        @if (CurrentUser != null)
+        {
+            <div class="nav-item px-3">
+                <NavLink class="nav-link" href="addactivities">
+                    <span class="oi oi-list-rich" aria-hidden="true"></span>Add activities
+                </NavLink>
+            </div>
+        }
+        @if (CurrentUser != null)
+        {
+            <div class="nav-item px-3">
+                <NavLink class="nav-link" href="searchevents">
+                    <span class="oi oi-list-rich" aria-hidden="true"></span>Search Events
+                </NavLink>
+            </div>
+        }
+        @if (CurrentUser != null)
+        {
+            <div class="nav-item px-3">
+                <NavLink class="nav-link" href="registerinevents">
+                    <span class="oi oi-list-rich" aria-hidden="true"></span>Registar num evento
+                </NavLink>
+            </div>
+        }
         @if (CurrentUser != null && CurrentUser.Role == "User")
         {
             <div class="nav-item px-3">
@@ -69,6 +71,14 @@
                         </NavLink>
                     </div>
                 }
+        @if (CurrentUser != null)
+        {
+            <div class="nav-item px-3">
+                <NavLink class="nav-link" href="profile">
+                    <span class="oi oi-list-rich" aria-hidden="true"></span>Profile
+                </NavLink>
+            </div>
+        }
     </nav>
 </div>
 
